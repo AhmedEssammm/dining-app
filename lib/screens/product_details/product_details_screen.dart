@@ -1,5 +1,9 @@
+import 'package:dining_app/cubits/basket/basket_cubit.dart';
+import 'package:dining_app/cubits/favorites/favorites_cubit.dart';
+import 'package:dining_app/models/product.dart';
+import 'package:dining_app/screens/checkout/checkout_screen.dart';
 import 'package:flutter/material.dart';
-import '../../models/product.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   final Product product;
@@ -34,13 +38,39 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     final product = widget.product;
 
     return Scaffold(
-      appBar: AppBar(title: Text(product.name)),
+      appBar: AppBar(
+        title: Text(product.name),
+        actions: [
+          BlocBuilder<FavoritesCubit, List<Product>>(
+            builder: (context, favorites) {
+              final isFav = context.read<FavoritesCubit>().isFavorite(product);
+              return IconButton(
+                icon: Icon(
+                  isFav ? Icons.favorite : Icons.favorite_border,
+                  color: isFav ? const Color(0xFF3BD4AE) : Colors.white,
+                ),
+                onPressed: () {
+                  context.read<FavoritesCubit>().toggleFavorite(product);
+                },
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.shopping_cart),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CheckoutScreen()),
+              );
+            },
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
@@ -56,19 +86,17 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // Name
             Text(
               product.name,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF3BD4AE),
+              ),
             ),
             const SizedBox(height: 8),
-
-            // Description
             Text(product.description, style: const TextStyle(fontSize: 16)),
             const SizedBox(height: 16),
-
-            // Quantity selector
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -82,7 +110,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     Text(
                       '$quantity',
                       style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     IconButton(
                       onPressed: increment,
@@ -93,20 +123,17 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               ],
             ),
             const SizedBox(height: 16),
-
-            // Total Price
             Text(
               'Total: \$${totalPrice.toStringAsFixed(2)}',
               style: const TextStyle(fontSize: 18, color: Colors.green),
             ),
-
             const Spacer(),
-
-            // Add to Basket Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
+                  context.read<BasketCubit>().addToBasket(product, quantity);
+
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                         content: Text(

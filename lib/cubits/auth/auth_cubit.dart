@@ -16,7 +16,6 @@ class AuthCubit extends Cubit<AuthState> {
       return;
     }
 
-    // Simulate dummy login check
     if (email == "test@example.com" && password == "123456") {
       emit(AuthSuccess());
     } else {

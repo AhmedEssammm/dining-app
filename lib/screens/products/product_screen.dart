@@ -1,7 +1,9 @@
+import 'package:dining_app/cubits/favorites/favorites_cubit.dart';
 import 'package:dining_app/cubits/product/product_cubit.dart';
 import 'package:dining_app/cubits/product/product_state.dart';
 import 'package:dining_app/models/product.dart';
 import 'package:dining_app/models/restaurant.dart';
+import 'package:dining_app/screens/checkout/checkout_screen.dart';
 import 'package:dining_app/screens/product_details/product_details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,13 +18,47 @@ class ProductScreen extends StatelessWidget {
     return BlocProvider(
       create: (_) => ProductCubit()..loadProducts(restaurant.id),
       child: Scaffold(
-        appBar: AppBar(title: Text(restaurant.name)),
+        appBar: AppBar(
+          title: Text(
+            restaurant.name,
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.shopping_cart),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CheckoutScreen()),
+                );
+              },
+            ),
+          ],
+        ),
         body: Column(
           children: [
-            // Restaurant Info
             RestaurantHeader(restaurant: restaurant),
-            const Divider(height: 1),
-            // Product List
+            const Divider(
+              height: 1,
+              color: Color(0xFF3BD4AE),
+            ),
+            Builder(
+              builder: (context) {
+                return Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      hintText: 'Search products...',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(16))),
+                    ),
+                    onChanged: (query) {
+                      context.read<ProductCubit>().searchProducts(query);
+                    },
+                  ),
+                );
+              },
+            ),
             Expanded(
               child: BlocBuilder<ProductCubit, ProductState>(
                 builder: (context, state) {
@@ -31,7 +67,7 @@ class ProductScreen extends StatelessWidget {
                   } else if (state is ProductLoaded) {
                     final products = state.products;
                     return ListView.builder(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       itemCount: products.length,
                       itemBuilder: (context, index) {
                         final product = products[index];
@@ -60,7 +96,7 @@ class RestaurantHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
-      color: Colors.grey.shade100,
+      color: const Color(0xFF083B55),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -81,7 +117,11 @@ class RestaurantHeader extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             restaurant.name,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF3BD4AE),
+            ),
           ),
           const SizedBox(height: 4),
           Text(
@@ -109,6 +149,7 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: const Color(0xFF083B55),
       margin: const EdgeInsets.symmetric(vertical: 10),
       child: ListTile(
         leading: SizedBox(
@@ -122,7 +163,8 @@ class ProductCard extends StatelessWidget {
               loadingBuilder: (context, child, progress) => progress == null
                   ? child
                   : const Center(
-                      child: CircularProgressIndicator(strokeWidth: 2)),
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
               errorBuilder: (_, __, ___) =>
                   const Icon(Icons.image_not_supported),
             ),
@@ -130,14 +172,28 @@ class ProductCard extends StatelessWidget {
         ),
         title: Text(product.name),
         subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
+        trailing: BlocBuilder<FavoritesCubit, List<Product>>(
+          builder: (context, favorites) {
+            final isFav = context.read<FavoritesCubit>().isFavorite(product);
+            return IconButton(
+              icon: Icon(
+                isFav ? Icons.favorite : Icons.favorite_border,
+                color: isFav ? const Color(0xFF3BD4AE) : Colors.grey,
+              ),
+              onPressed: () {
+                context.read<FavoritesCubit>().toggleFavorite(product);
+              },
+            );
+          },
+        ),
         onTap: () {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => ProductDetailsScreen(product: product),
-    ),
-  );
-},
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ProductDetailsScreen(product: product),
+            ),
+          );
+        },
       ),
     );
   }

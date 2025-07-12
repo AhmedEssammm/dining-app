@@ -4,6 +4,7 @@ class Restaurant {
   final String description;
   final String imageUrl;
   final double rating;
+  final String category;
 
   Restaurant({
     required this.id,
@@ -11,5 +12,6 @@ class Restaurant {
     required this.description,
     required this.imageUrl,
     required this.rating,
+    required this.category,
   });
 }
